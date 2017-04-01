@@ -10,6 +10,11 @@ stereo_pair=rgb2gray(imread('stereo_pair.jpg'));
 im1{3}=imresize(stereo_pair(:,1:838/2-120-17),resize);
 im2{3}=imresize(stereo_pair(:,838/2+120+1:838-17),resize);
 
+% stereo_left=rgb2gray(imread('im1.bmp'));
+% stereo_right=rgb2gray(imread('im1.bmp'));
+% im1{3}=imresize(stereo_left,resize);
+% im2{3}=imresize(stereo_right,resize);
+
 % %оконтуривание
 % im1{1} = edge(im1{1},'canny',0.1);
 % im2{1} = edge(im2{1},'canny',0.1);
