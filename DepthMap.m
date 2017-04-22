@@ -17,22 +17,144 @@ resize=1;
 % im1{1}=im2double(im1{1});
 % im2{1}=im2double(im2{1});
 
+max_disparity=50;
+
 %
 %загрузка изображений
 stereo_pair=rgb2gray(imread('stereo_pair.jpg'));
+field1='left';
+value1=imresize(stereo_pair(:,1:838/2-120),resize);
+field2='right';
+value2=imresize(stereo_pair(:,838/2+120+1:838),resize);
+[rows,cols]=size(value1);
+field3='disparity';
+value3=zeros(rows,cols);
+field4='P_I1_I2';
+value4=zeros(256,256);
+field5='num_correspondence';
+value5=0;
+field6='P_I1';
+value6=zeros(1,256);
+field7='P_I2';
+value7=zeros(1,256);
+field8='cost';
+value8=zeros(rows,cols,max_disparity*2-1);
+field9='h1';
+value9=zeros(1,256);
+field10='h2';
+value10=zeros(1,256);
+field11='h12';
+value11=zeros(256,256);
+field12='cost_s';
+value12=zeros(rows,cols,max_disparity*2-1);
 
-im1{1}=imresize(stereo_pair(:,1:838/2-120),resize);
-im2{1}=imresize(stereo_pair(:,838/2+120+1:838),resize);
+stereo_sg=struct(field1,value1,field2,value2,field3,value3,field4,value4,field5,value5,field6,value6,field7,value7,field8,value8,field9,value9,field10,value10,field11,value11,field12,value12,'rows',rows,'cols',cols);
 
 %оконтуривание
-im1{1} = edge(im1{1},'canny',0.1);
-im2{1} = edge(im2{1},'canny',0.1);
+% stereo_sg.left = edge(stereo_sg.left,'canny',0.1);
+% stereo_sg.right = edge(stereo_sg.right,'canny',0.1);
 
-im1{1}=im2double(im1{1});
-im2{1}=im2double(im2{1});
+stereo_sg.left=double(stereo_sg.left);
+stereo_sg.right=double(stereo_sg.right);
 
 %%
-[M,N]=size(im1{1}); %размер изображения
+%расчет взаимной информации
+
+for x=1:stereo_sg.cols
+    
+    for y=1:stereo_sg.rows
+
+        d=stereo_sg.disparity(y,x);
+        i=stereo_sg.left(y,x)+1;
+        k=stereo_sg.right(y,x-d)+1;
+        stereo_sg.P_I1_I2(i,k)=stereo_sg.P_I1_I2(i,k)+1;
+        
+    end;
+    
+end;
+
+stereo_sg.num_correspondence=sum(sum(stereo_sg.P_I1_I2));
+stereo_sg.P_I1_I2=stereo_sg.P_I1_I2/stereo_sg.num_correspondence;
+
+for i=1:256
+    
+    stereo_sg.P_I1(i)=sum(stereo_sg.P_I1_I2(i,:));
+    stereo_sg.P_I2(i)=sum(stereo_sg.P_I1_I2(:,i));
+    
+end;
+
+for i=1:256
+    
+    stereo_sg.h1(i)=-1/stereo_sg.num_correspondence*log2(stereo_sg.P_I1(i));
+    stereo_sg.h2(i)=-1/stereo_sg.num_correspondence*log2(stereo_sg.P_I2(i));
+    
+    for k=1:256
+        
+        stereo_sg.h12(i,k)=-1/stereo_sg.num_correspondence*log2(stereo_sg.P_I1_I2(i,k));
+        
+    end;
+    
+end;
+
+h = waitbar(0,'Please wait...');
+
+for x=1:stereo_sg.cols
+    
+    waitbar(x/stereo_sg.cols)
+    
+    for y=1:stereo_sg.rows
+        
+        for d=1:(max_disparity*2-1)
+            
+            if(((x-d+max_disparity)>0)&&((x-d+max_disparity)<=stereo_sg.cols))
+            
+                i=stereo_sg.left(y,x)+1;
+                k=stereo_sg.right(y,x-d+max_disparity)+1;
+                stereo_sg.cost(y,x,d)=stereo_sg.h12(i,k)-stereo_sg.h1(i)-stereo_sg.h2(k);
+        
+            end;
+            
+        end;
+            
+    end;
+    
+end;
+
+close(h);
+
+
+%%
+%ограничения
+h = waitbar(0,'Please wait...');
+
+for x=1:stereo_sg.cols
+    
+    waitbar(x/stereo_sg.cols)
+    
+    for y=1:stereo_sg.rows
+        
+        for d=1:(max_disparity*2-1)
+            
+            for xr=-1:1
+
+                for yr=-1:1
+
+                    %cost_s_d=
+                    stereo_sg.cost_s(y,x,d)=stereo_sg.cost_s(y,x,d)+path_sg(xr,yr,x,y,d,stereo_sg.cost,0.5,0.8, max_disparity, stereo_sg.cols, stereo_sg.rows);
+
+                end;
+
+            end;
+
+        end;
+            
+    end;
+    
+end;
+
+close(h);
+%%
+%[M,N]=size(im1{1}); %размер изображения
 B=0.2; %база (расстояние между центрами камер)
 f=0.025; %фокусное расстояние
 l=6.5*10^(-6); %размер пиксела
@@ -49,147 +171,48 @@ k=1;%нумерация элементов этого массива
 % mask = [1 1 1; 1 0 1; 1 1 1];
 
 
-%%
-%Фазовая корреляция 
-%для поиска среднего смещения одного кадра относительно другого
 
-%БПФ изображений
-fft_im1=fft2(im1{1});
-fft_im2=fft2(im2{1});
 
-%figure; imshow(fft_im1);
-%figure; imshow(fft_im2);
 
-peak=max(max(abs(fft_im1)));%максимальное значение
-
-hadamar=fft_im1.*conj(fft_im2)/peak^2;%взаимная спектральная плотность
-
-%figure; imshow(hadamar);
-
-ifft_hadamar=exp(ifft2(hadamar));%обратное БПФ
-ifft_hadamar_max=max(max(ifft_hadamar));%пик фазовой корреляция
-%figure; surf(ifft_hadamar);
-
-%координаты пика фазовой корреляции
-[Y_shift,X_shift] = find(ifft_hadamar==ifft_hadamar_max);
-r_max=4*blk_sz; %максимальная длина вектора движения
 
 %%
-%поиск соответствующих точек (метод 3SS)
-h = waitbar(0,'Please wait...');
+%поиск соответствующих точек
+% h = waitbar(0,'Please wait...');
+% 
+% max_dist=0;%максимальная дальность (инициализация нулем)
+% 
+% 
+% waitbar(i/(N-mod(N,blk_sz)-1))
+% close(h);
 
-max_dist=0;%максимальная дальность (инициализация нулем)
+h
 
-for i = 1:blk_sz:N-mod(N,blk_sz)-1 
-    waitbar(i/(N-mod(N,blk_sz)-1))
-        
-    for j= 1:blk_sz:M-mod(M,blk_sz)-1 
-        
-        if (i+blk_sz-1)<N&&(j+blk_sz-1)<M
-        
-            crd(k,1)=i;
-            crd(k,2)=j;
-            crd(k,3)=i;
-            crd(k,4)=j;
-            
-            block_ref=double(im1{1}(j:j+blk_sz-1,i:i+blk_sz-1));
-            R_max=0;
-        
-            %число шагов
-            
-            %шаг перебора
-            step=ceil((r_max+1)/2);
-            step_count=ceil(log2(r_max+1));
-            %начальное приближение
-            X=crd(k,1)+X_shift;
-            Y=crd(k,2)+Y_shift;
-
-%             step=big_step;
-            
-%             for step_step=1:step_count
-%                 step=ceil(big_step/2^(step_step-1));
-                
-            while step>=1
-    
-                    for q=(X-step):step:(X+step)
-                        for w=Y
-                
-                            if q>0&&w>0&&(q+blk_sz-1)<N&&(w+blk_sz-1)<M
-                
-                                block_test=double(im2{1}(w:w+blk_sz-1,q:q+blk_sz-1));
-                                R=abs(corr2(block_ref,block_test));
-                                
-                                    if R_max<R
-                                        R_max=R;
-                                        crd(k,3)=q;
-                                        crd(k,4)=w;
-                                        crd(k,5)=R_max;
-                                        
-                                    end;
-                                    
-                                    X=crd(k,3);Y=crd(k,4);
-                            end;
-                        end;
-                    end;
-                    
-                    step=floor(step/2);
-                    
-            end;
-        
-           if (crd(k,5)>0.2)&&(crd(k,1)~=crd(k,3))    
-            
-                im1{2}(crd(k,2),crd(k,1))=abs(B*f/l./(crd(k,1)-crd(k,3)));
-%                 if (im1{2}(crd(k,1),crd(k,2))==inf)
-%                     im1{2}(crd(k,1),crd(k,2))=0;
-%                 end;
-                
-                
-%                 if (max_dist<im1{2}(crd(k,1),crd(k,2)))&&(im1{2}(crd(k,1),crd(k,2))~=inf)
-%                     max_dist=im1{2}(crd(k,1),crd(k,2));
-%                 end;
-%             else
-%             
-%                 im1{2}(crd(k,1),crd(k,2))=inf;
-            
-            end;
-%             im1{2}(crd(k,1),crd(k,2))=1/(im1{2}(crd(k,1),crd(k,2)));
-
-            im1{2}(crd(k,2):crd(k,2)+blk_sz-1,crd(k,1):crd(k,1)+blk_sz-1)=im1{2}(crd(k,2),crd(k,1));
- 
-        k=k+1;
-        end;
-    
-    end;
-    
-end;
-
-close(h);
-
+%%
 %вывод изображений
-figure; imshow(im1{1});
-figure; imshow(im2{1});
-
-% im1{2}=exp(50.*im1{2});
-
-figure;
-surf(im1{2});
-
-max_dist=max(max(im1{2}));
-im1{2}=im1{2}/max_dist;
-
-%im1{2}=im1{2}/max_dist;
-figure;
-imshow(im1{2});
-
-figure;
-filtered=medfilt2(im1{2},[1*blk_sz 1*blk_sz]);
-imshow(filtered);
-
-figure;
-mesh(filtered);
-
-figure;
-imshow(filtered.*im1{1});
+% figure; imshow(im1{1});
+% figure; imshow(im2{1});
+% 
+% % im1{2}=exp(50.*im1{2});
+% 
+% figure;
+% surf(im1{2});
+% 
+% max_dist=max(max(im1{2}));
+% im1{2}=im1{2}/max_dist;
+% 
+% %im1{2}=im1{2}/max_dist;
+% figure;
+% imshow(im1{2});
+% 
+% figure;
+% filtered=medfilt2(im1{2},[1*blk_sz 1*blk_sz]);
+% imshow(filtered);
+% 
+% figure;
+% mesh(filtered);
+% 
+% figure;
+% imshow(filtered.*im1{1});
 
 
                 
