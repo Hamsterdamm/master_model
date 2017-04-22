@@ -127,22 +127,28 @@ close(h);
 %ограничения
 h = waitbar(0,'Please wait...');
 
+%cost_s_d=zeros(1,max_disparity*2-1);
+
 for x=1:stereo_sg.cols
     
     waitbar(x/stereo_sg.cols)
     
     for y=1:stereo_sg.rows
         
-        for d=1:(max_disparity*2-1)
+        
             
-            for xr=-1:1
+        for xr=-1:1
 
-                for yr=-1:1
+            for yr=-1:1
 
-                    %cost_s_d=
-                    stereo_sg.cost_s(y,x,d)=stereo_sg.cost_s(y,x,d)+path_sg(xr,yr,x,y,d,stereo_sg.cost,0.5,0.8, max_disparity, stereo_sg.cols, stereo_sg.rows);
 
-                end;
+                    cost_s_d=path_sg(xr,yr,x,y,d,stereo_sg.cost,0.5,0.8, max_disparity, stereo_sg.cols, stereo_sg.rows);
+                    
+                    for d=1:(max_disparity*2-1)
+                    
+                    stereo_sg.cost_s(y,x,d)=stereo_sg.cost_s(y,x,d)+cost_s_d(d);
+
+                    end;
 
             end;
 
