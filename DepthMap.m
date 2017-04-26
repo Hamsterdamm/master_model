@@ -41,6 +41,7 @@ stereo_sg.right=double(stereo_sg.right);
 %расчет взаимной информации
 
 %взаимная плотность вероятности
+
 for x=1:stereo_sg.cols 
     
     for y=1:stereo_sg.rows
@@ -48,7 +49,7 @@ for x=1:stereo_sg.cols
         d=stereo_sg.disparity(y,x);
         i=stereo_sg.left(y,x)+1;
         k=stereo_sg.right(y,x-d)+1;
-        stereo_sg.P_I1_I2(i,k)=stereo_sg.P_I1_I2(i,k)+1;
+        stereo_sg.P_I1_I2(k,i)=stereo_sg.P_I1_I2(k,i)+1;
         
     end;
     
@@ -58,27 +59,14 @@ stereo_sg.num_correspondence=sum(sum(stereo_sg.P_I1_I2)); %число соответствий
 stereo_sg.P_I1_I2=stereo_sg.P_I1_I2/stereo_sg.num_correspondence; %делим распределение на число соответствий
 
 %распределение вероятности для каждого изображения
-for i=1:256
-    
-    stereo_sg.P_I1(i)=sum(stereo_sg.P_I1_I2(i,:));
-    stereo_sg.P_I2(i)=sum(stereo_sg.P_I1_I2(:,i));
-    
-end;
+stereo_sg.P_I1=sum(stereo_sg.P_I1_I2);
+stereo_sg.P_I2=sum(transpose(stereo_sg.P_I1_I2));
+
 
 %энтропия
-for i=1:256
-    
-    stereo_sg.h1(i)=-1/stereo_sg.num_correspondence*log2(stereo_sg.P_I1(i));
-    stereo_sg.h2(i)=-1/stereo_sg.num_correspondence*log2(stereo_sg.P_I2(i));
-    
-    %взаимная энтропия
-    for k=1:256
-        
-        stereo_sg.h12(i,k)=-1/stereo_sg.num_correspondence*log2(stereo_sg.P_I1_I2(i,k));
-        
-    end;
-    
-end;
+stereo_sg.h1=log2(stereo_sg.P_I1)*(-1/stereo_sg.num_correspondence);
+stereo_sg.h2=log2(stereo_sg.P_I2)*(-1/stereo_sg.num_correspondence);
+stereo_sg.h12=log2(stereo_sg.P_I1_I2)*(-1/stereo_sg.num_correspondence);
 
 h = waitbar(0,'Please wait...');
 
