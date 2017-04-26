@@ -4,51 +4,31 @@ clc;
 
 resize=1;
 
-% %%
-% %загрузка изображений
-% 
-% im1{1}=imresize(imread('left.png'),resize);
-% im2{1}=imresize(imread('right.png'),resize);
-% 
-% %оконтуривание
-% im1{1} = edge(im1{1},'canny',0.1);
-% im2{1} = edge(im2{1},'canny',0.1);
-% 
-% im1{1}=im2double(im1{1});
-% im2{1}=im2double(im2{1});
 
 max_disparity=50;
 
 %
 %загрузка изображений
-stereo_pair=rgb2gray(imread('stereo_pair.jpg'));
-field1='left';
-value1=imresize(stereo_pair(:,1:838/2-120),resize);
-field2='right';
-value2=imresize(stereo_pair(:,838/2+120+1:838),resize);
-[rows,cols]=size(value1);
-field3='disparity';
-value3=zeros(rows,cols);
-field4='P_I1_I2';
-value4=zeros(256,256);
-field5='num_correspondence';
-value5=0;
-field6='P_I1';
-value6=zeros(1,256);
-field7='P_I2';
-value7=zeros(1,256);
-field8='cost';
-value8=zeros(rows,cols,max_disparity*2-1);
-field9='h1';
-value9=zeros(1,256);
-field10='h2';
-value10=zeros(1,256);
-field11='h12';
-value11=zeros(256,256);
-field12='cost_s';
-value12=zeros(rows,cols,max_disparity*2-1);
 
-stereo_sg=struct(field1,value1,field2,value2,field3,value3,field4,value4,field5,value5,field6,value6,field7,value7,field8,value8,field9,value9,field10,value10,field11,value11,field12,value12,'rows',rows,'cols',cols);
+left=rgb2gray(imread('Teddy_L.png'));
+right=rgb2gray(imread('Teddy_R.png'));
+[rows,cols]=size(left);
+
+stereo_sg=struct(   'left', imresize(left,resize),...
+                    'right', imresize(right,resize),...
+                    'disparity',zeros(rows,cols),...
+                    'P_I1_I2',zeros(256,256),...
+                    'num_correspondence',0,...
+                    'P_I1',zeros(1,256),...
+                    'P_I2',zeros(1,256),...
+                    'cost',zeros(rows,cols,max_disparity*2-1),...
+                    'h1',zeros(1,256),...
+                    'h2',zeros(1,256),...
+                    'h12',zeros(256,256),...
+                    'cost_s',zeros(rows,cols,max_disparity*2-1),...
+                    'rows',rows,...
+                    'cols',cols...
+                    );
 
 %оконтуривание
 % stereo_sg.left = edge(stereo_sg.left,'canny',0.1);
@@ -60,7 +40,8 @@ stereo_sg.right=double(stereo_sg.right);
 %%
 %расчет взаимной информации
 
-for x=1:stereo_sg.cols
+%взаимная плотность вероятности
+for x=1:stereo_sg.cols 
     
     for y=1:stereo_sg.rows
 
@@ -73,9 +54,10 @@ for x=1:stereo_sg.cols
     
 end;
 
-stereo_sg.num_correspondence=sum(sum(stereo_sg.P_I1_I2));
-stereo_sg.P_I1_I2=stereo_sg.P_I1_I2/stereo_sg.num_correspondence;
+stereo_sg.num_correspondence=sum(sum(stereo_sg.P_I1_I2)); %число соответствий
+stereo_sg.P_I1_I2=stereo_sg.P_I1_I2/stereo_sg.num_correspondence; %делим распределение на число соответствий
 
+%распределение вероятности для каждого изображения
 for i=1:256
     
     stereo_sg.P_I1(i)=sum(stereo_sg.P_I1_I2(i,:));
@@ -83,11 +65,13 @@ for i=1:256
     
 end;
 
+%энтропия
 for i=1:256
     
     stereo_sg.h1(i)=-1/stereo_sg.num_correspondence*log2(stereo_sg.P_I1(i));
     stereo_sg.h2(i)=-1/stereo_sg.num_correspondence*log2(stereo_sg.P_I2(i));
     
+    %взаимная энтропия
     for k=1:256
         
         stereo_sg.h12(i,k)=-1/stereo_sg.num_correspondence*log2(stereo_sg.P_I1_I2(i,k));
@@ -98,6 +82,7 @@ end;
 
 h = waitbar(0,'Please wait...');
 
+%расчет "стоимостей"
 for x=1:stereo_sg.cols
     
     waitbar(x/stereo_sg.cols)
@@ -128,6 +113,18 @@ close(h);
 h = waitbar(0,'Please wait...');
 
 %cost_s_d=zeros(1,max_disparity*2-1);
+
+% for 
+% if ((x==1)||(y==1)||(x==cols)||(y==rows))
+% 
+% stereo_sg.cost_s(y,x,d);
+% 
+% end;
+
+stereo_sg.cost_s(1,:,:)=stereo_sg.cost(1,:,:);
+stereo_sg.cost_s(:,1,:)=stereo_sg.cost(:,1,:);
+stereo_sg.cost_s(stereo_sg.rows,:,:)=stereo_sg.cost(stereo_sg.rows,:,:);
+stereo_sg.cost_s(:,stereo_sg.cols,:)=stereo_sg.cost(:,stereo_sg.cols,:);
 
 for x=1:stereo_sg.cols
     
