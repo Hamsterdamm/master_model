@@ -76,46 +76,11 @@ l=6.5*10^(-6); %размер пиксела
 blk_sz=7;
 
 
-%массивы найденных соответствий точек (инициализация нулями)
-crd = zeros(M*N,5);
-im1{2} = zeros(M,N);
-k=1;%нумерация элементов этого массива
-
-% mask = [1 1 1; 1 0 1; 1 1 1];
-
-
-
-
-
-
-%%
-%поиск соответствующих точек
-% h = waitbar(0,'Please wait...');
-% 
-% max_dist=0;%максимальная дальность (инициализация нулем)
-% 
-% 
-% waitbar(i/(N-mod(N,blk_sz)-1))
-% close(h);
-
-h
-
 %%
 %вывод изображений
-% figure; imshow(im1{1});
-% figure; imshow(im2{1});
-% 
-% % im1{2}=exp(50.*im1{2});
-% 
+ 
 % figure;
 % surf(im1{2});
-% 
-% max_dist=max(max(im1{2}));
-% im1{2}=im1{2}/max_dist;
-% 
-% %im1{2}=im1{2}/max_dist;
-% figure;
-% imshow(im1{2});
 % 
 % figure;
 % filtered=medfilt2(im1{2},[1*blk_sz 1*blk_sz]);
@@ -123,9 +88,7 @@ h
 % 
 % figure;
 % mesh(filtered);
-% 
-% figure;
-% imshow(filtered.*im1{1});
+
 
 
                 
