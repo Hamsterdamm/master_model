@@ -4,146 +4,68 @@ clc;
 
 resize=1;
 
-
-max_disparity=50;
+min_disparity=0;
+max_disparity=16*4;
+P1=8;
+P2=32;
 
 %
 %загрузка изображений
 
-left=rgb2gray(imread('Teddy_L.png'));
-right=rgb2gray(imread('Teddy_R.png'));
+left=rgb2gray(imresize(imread('Teddy_L.png'),resize));
+right=rgb2gray(imresize(imread('Teddy_R.png'),resize));
 [rows,cols]=size(left);
 
-stereo_sg=struct(   'left', imresize(left,resize),...
-                    'right', imresize(right,resize),...
-                    'disparity',zeros(rows,cols),...
-                    'P_I1_I2',zeros(256,256),...
-                    'num_correspondence',0,...
-                    'P_I1',zeros(1,256),...
-                    'P_I2',zeros(1,256),...
-                    'cost',zeros(rows,cols,max_disparity*2-1),...
-                    'h1',zeros(1,256),...
-                    'h2',zeros(1,256),...
-                    'h12',zeros(256,256),...
-                    'cost_s',zeros(rows,cols,max_disparity*2-1),...
-                    'rows',rows,...
-                    'cols',cols...
-                    );
-
-%оконтуривание
-% stereo_sg.left = edge(stereo_sg.left,'canny',0.1);
-% stereo_sg.right = edge(stereo_sg.right,'canny',0.1);
-
-stereo_sg.left=double(stereo_sg.left);
-stereo_sg.right=double(stereo_sg.right);
-
-%%
-%расчет взаимной информации
-
-%взаимная плотность вероятности
-
-for x=1:stereo_sg.cols 
-    
-    for y=1:stereo_sg.rows
-
-        d=stereo_sg.disparity(y,x);
-        i=stereo_sg.left(y,x)+1;
-        k=stereo_sg.right(y,x-d)+1;
-        stereo_sg.P_I1_I2(k,i)=stereo_sg.P_I1_I2(k,i)+1;
-        
-    end;
-    
-end;
-
-stereo_sg.num_correspondence=sum(sum(stereo_sg.P_I1_I2)); %число соответствий
-stereo_sg.P_I1_I2=stereo_sg.P_I1_I2/stereo_sg.num_correspondence; %делим распределение на число соответствий
-
-%распределение вероятности для каждого изображения
-stereo_sg.P_I1=sum(stereo_sg.P_I1_I2);
-stereo_sg.P_I2=sum(transpose(stereo_sg.P_I1_I2));
 
 
-%энтропия
-stereo_sg.h1=log2(stereo_sg.P_I1)*(-1/stereo_sg.num_correspondence);
-stereo_sg.h2=log2(stereo_sg.P_I2)*(-1/stereo_sg.num_correspondence);
-stereo_sg.h12=log2(stereo_sg.P_I1_I2)*(-1/stereo_sg.num_correspondence);
+figure;
+imshow(left,[0 255]);
+figure;
+imshow(right,[0 255]);
 
-h = waitbar(0,'Please wait...');
+resize_0=1/8;
+left_0=imresize(left,resize_0);
+right_0=imresize(right,resize_0);
+max_disparity_0=max_disparity*resize_0;
+init_disp=zeros(size(left_0));
 
-%расчет "стоимостей"
-for x=1:stereo_sg.cols
-    
-    waitbar(x/stereo_sg.cols)
-    
-    for y=1:stereo_sg.rows
-        
-        for d=1:(max_disparity*2-1)
-            
-            if(((x-d+max_disparity)>0)&&((x-d+max_disparity)<=stereo_sg.cols))
-            
-                i=stereo_sg.left(y,x)+1;
-                k=stereo_sg.right(y,x-d+max_disparity)+1;
-                stereo_sg.cost(y,x,d)=stereo_sg.h12(i,k)-stereo_sg.h1(i)-stereo_sg.h2(k);
-        
-            end;
-            
-        end;
-            
-    end;
-    
-end;
+disparity_est=stereo_sg_func( left_0, right_0 , init_disp, max_disparity_0, P1, P2);
 
-close(h);
+figure;
+imshow(disparity_est,[min_disparity max_disparity]);
 
+resize_1=1/4;
+left_1=imresize(left,resize_1);
+right_1=imresize(right,resize_1);
+max_disparity_1=max_disparity*resize_1;
+disparity_est=round(imresize(disparity_est,size(left_1)));
+disparity_est=stereo_sg_func( left_1, right_1 , disparity_est, max_disparity_1, P1, P2);
 
-%%
-%ограничения
-h = waitbar(0,'Please wait...');
+figure;
+imshow(disparity_est,[min_disparity max_disparity]);
 
-%cost_s_d=zeros(1,max_disparity*2-1);
+resize_2=1/2;
+left_2=imresize(left,resize_2);
+right_2=imresize(right,resize_2);
+max_disparity_2=max_disparity*resize_2;
+disparity_est=round(imresize(disparity_est,size(left_2)));
+disparity_est=stereo_sg_func( left_2, right_2 , disparity_est, max_disparity_2, P1, P2);
 
-% for 
-% if ((x==1)||(y==1)||(x==cols)||(y==rows))
-% 
-% stereo_sg.cost_s(y,x,d);
-% 
-% end;
+figure;
+imshow(disparity_est,[min_disparity max_disparity]);
 
-stereo_sg.cost_s(1,:,:)=stereo_sg.cost(1,:,:);
-stereo_sg.cost_s(:,1,:)=stereo_sg.cost(:,1,:);
-stereo_sg.cost_s(stereo_sg.rows,:,:)=stereo_sg.cost(stereo_sg.rows,:,:);
-stereo_sg.cost_s(:,stereo_sg.cols,:)=stereo_sg.cost(:,stereo_sg.cols,:);
+resize_3=1;
+left_3=imresize(left,resize_3);
+right_3=imresize(right,resize_3);
+max_disparity_3=max_disparity*resize_3;
+disparity_est=round(imresize(disparity_est,size(left_3)));
+disparity_est=stereo_sg_func( left_3, right_3 , disparity_est, max_disparity_3, P1, P2);
 
-for x=1:stereo_sg.cols
-    
-    waitbar(x/stereo_sg.cols)
-    
-    for y=1:stereo_sg.rows
-        
-        
-            
-        for xr=-1:1
-
-            for yr=-1:1
+figure;
+imshow(disparity_est,[min_disparity max_disparity]);
 
 
-                    cost_s_d=path_sg(xr,yr,x,y,d,stereo_sg.cost,0.5,0.8, max_disparity, stereo_sg.cols, stereo_sg.rows);
-                    
-                    for d=1:(max_disparity*2-1)
-                    
-                    stereo_sg.cost_s(y,x,d)=stereo_sg.cost_s(y,x,d)+cost_s_d(d);
 
-                    end;
-
-            end;
-
-        end;
-            
-    end;
-    
-end;
-
-close(h);
 %%
 %[M,N]=size(im1{1}); %размер изображения
 B=0.2; %база (расстояние между центрами камер)
