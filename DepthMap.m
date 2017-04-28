@@ -27,7 +27,7 @@ resize_0=1/8;
 left_0=imresize(left,resize_0);
 right_0=imresize(right,resize_0);
 max_disparity_0=max_disparity*resize_0;
-init_disp=zeros(size(left_0));
+init_disp=zeros(size(left_0),'uint8');
 
 disparity_est=stereo_sg_func( left_0, right_0 , init_disp, max_disparity_0, P1, P2);
 
