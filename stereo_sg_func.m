@@ -21,13 +21,16 @@ for x=1:cols
     
     for y=1:rows
 
-        d=init_disp(y,x);
-        if (x-d>0)&&(x-d<cols)
-        i=left(y,x)+1;
-       
-        k=right(y,x-d)+1;
+        d=init_disp(y,x);%значение дальности для (x,y) пиксела
+        if isfinite(d)&&(x-d>0)&&(x-d<cols)%еслисмещенный пиксел находится в пределах изображения
+        i=left(y,x)+1;%i-я яркость - яркость пиксела (x,y)
+        k=right(y,x-d)+1;%k-я яркость - яркость смещенного пиксела (x-d,y)
+        %добавляем 1 т.к. яркости от 0 до 255, а массив плотности
+        %вероятности от 1 до 256
         
-        P_I1_I2(k,i)=P_I1_I2(k,i)+1;
+        P_I1_I2(k,i)=P_I1_I2(k,i)+1;%запоминаем +1 пиксел 
+                                    %с яркостью i на левом изображении 
+                                    %и яркостью k на правом
         end       
     end
     
@@ -42,9 +45,9 @@ P_I2=sum(transpose(P_I1_I2));%суммируем все вероятности вдоль строк
 
 
 %энтропия
-h1=log2(P_I1)*(-1/num_correspondence);
-h2=log2(P_I2)*(-1/num_correspondence);
-h12=log2(P_I1_I2)*(-1/num_correspondence);
+h1=P_I1.*log(P_I1)*(-1/num_correspondence);
+h2=P_I2.*log(P_I2)*(-1/num_correspondence);
+h12=P_I1_I2.*log(P_I1_I2)*(-1/num_correspondence);
 
 h = waitbar(0,'Please wait...');
 
@@ -55,13 +58,13 @@ for x=1:cols
     
     for y=1:rows
         
-        for d=1:(max_disparity)
+        for d=0:(max_disparity-1)
             
             if(((x-d)>0)&&((x-d)<=cols))
             
                 i=left(y,x)+1;
                 k=right(y,x-d)+1;
-                cost(y,x,d)=h12(i,k)-h1(i)-h2(k);
+                cost(y,x,d+1)=-(h1(i)+h2(k)-h12(i,k));
         
             end
             
@@ -71,21 +74,15 @@ for x=1:cols
     
 end
 
+%temp_cost=zeros(size(cost));
+cost(~isfinite(cost))=0;
+%cost=temp_cost;
 close(h);
 
 
 %%
 %ограничения
 h = waitbar(0,'Please wait...');
-
-%cost_s_d=zeros(1,max_disparity*2-1);
-
-% for 
-% if ((x==1)||(y==1)||(x==cols)||(y==rows))
-% 
-% cost_s(y,x,d);
-% 
-% end;
 
 wb=0;
 
@@ -272,15 +269,15 @@ close(h);
 
 h = waitbar(0,'Please wait...');
 
-%расчет "стоимостей"
+%расчет счетов
 for x=1:cols
     
     waitbar(x/cols)
     
     for y=1:rows
         
-        [~,disp]=min(cost_s(y,x,:));
-        disparity_est(y,x)=disp;
+        [~,disp]=min(cost_s(y,x,:),[],3);
+        disparity_est(y,x)=disp-1;
                     
     end
     
