@@ -45,9 +45,9 @@ P_I2=sum(transpose(P_I1_I2));%суммируем все вероятности вдоль строк
 
 
 %энтропия
-h1=P_I1.*log(P_I1)*(-1/num_correspondence);
-h2=P_I2.*log(P_I2)*(-1/num_correspondence);
-h12=P_I1_I2.*log(P_I1_I2)*(-1/num_correspondence);
+h1=log(P_I1)*(-1/num_correspondence);
+h2=log(P_I2)*(-1/num_correspondence);
+h12=log(P_I1_I2)*(-1/num_correspondence);
 
 h = waitbar(0,'Please wait...');
 
