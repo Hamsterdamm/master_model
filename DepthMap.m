@@ -4,8 +4,8 @@ clc;
 
 %%
 %входные данные и параметры
-left=rgb2gray(imread('Teddy_L.png'));
-right=rgb2gray(imread('Teddy_R.png'));
+left=rgb2gray(imread('data/Teddy_L.png'));
+right=rgb2gray(imread('data/Teddy_R.png'));
 [rows,cols]=size(left);
 min_disparity=0;
 max_disparity=16*4;
