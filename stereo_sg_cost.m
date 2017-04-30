@@ -35,11 +35,27 @@ P_I1_I2=P_I1_I2/num_correspondence; %делим распределение на число соответствий
 P_I1=sum(P_I1_I2);%суммируем все вероятности вдоль столбцов
 P_I2=sum(transpose(P_I1_I2));%суммируем все вероятности вдоль строк
 
-filter2d = fspecial('gaussian', size(P_I1_I2)); % gaussian kernel
-filter1d = fspecial('gaussian', size(P_I1)); % gaussian kernel
-conv2(P_I1_I2, filter2d, 'same'); % convolution
-conv(P_I1, filter1d, 'same');
-conv(P_I2, filter1d, 'same');
+% filter2d = fspecial('gaussian', size(P_I1_I2)); % gaussian kernel
+% filter1d = fspecial('gaussian', size(P_I1)); % gaussian kernel
+% P_I1_I2_F=conv2(P_I1_I2, filter2d, 'same');
+% P_I1_F=conv(P_I1, filter1d, 'same');
+% P_I2_F=conv(P_I2, filter1d, 'same');
+% 
+% P_I1_I2_F_log=log(P_I1_I2_F);
+% P_I1_F_log=log(P_I1_F);
+% P_I2_F_log=log(P_I2_F);
+% P_I1_I2_F_log(~isfinite(P_I1_I2_F_log))=0;
+% P_I1_F_log(~isfinite(P_I1_F_log))=0;
+% P_I2_F_log(~isfinite(P_I2_F_log))=0;
+% 
+% P_I1_I2_F_log_F=conv2(P_I1_I2_F_log, filter2d, 'same');
+% P_I1_F_log_F=conv(P_I1_F_log, filter1d, 'same');
+% P_I2_F_log_F=conv(P_I2_F_log, filter1d, 'same');
+% 
+% %энтропия
+% h12=P_I1_I2_F_log_F*(-1/num_correspondence);
+% h1=P_I1_F_log_F*(-1/num_correspondence);
+% h2=P_I2_F_log_F*(-1/num_correspondence);
 
 %энтропия
 h12=log(P_I1_I2)*(-1/num_correspondence);
