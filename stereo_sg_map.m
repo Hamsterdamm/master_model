@@ -6,7 +6,7 @@ disp=zeros(rows, cols,'uint8');
 
 %формирование карты глубины
 
-h = waitbar(0,'Please wait...');
+h = waitbar(0,'Depth map computation in progress...');
 
 %расчет счетов
 for x=1:cols
@@ -23,7 +23,6 @@ for x=1:cols
 end
 
 close(h);
-
 
 end
 

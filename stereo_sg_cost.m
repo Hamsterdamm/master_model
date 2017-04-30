@@ -35,6 +35,11 @@ P_I1_I2=P_I1_I2/num_correspondence; %делим распределение на число соответствий
 P_I1=sum(P_I1_I2);%суммируем все вероятности вдоль столбцов
 P_I2=sum(transpose(P_I1_I2));%суммируем все вероятности вдоль строк
 
+filter2d = fspecial('gaussian', size(P_I1_I2)); % gaussian kernel
+filter1d = fspecial('gaussian', size(P_I1)); % gaussian kernel
+conv2(P_I1_I2, filter2d, 'same'); % convolution
+conv(P_I1, filter1d, 'same');
+conv(P_I2, filter1d, 'same');
 
 %энтропия
 h12=log(P_I1_I2)*(-1/num_correspondence);
@@ -42,7 +47,7 @@ h1=log(P_I1)*(-1/num_correspondence);
 h2=log(P_I2)*(-1/num_correspondence);
 
 
-h = waitbar(0,'Please wait...');
+h = waitbar(0,'Cost computation in progress...');
 
 %расчет "стоимостей"
 for x=1:cols
