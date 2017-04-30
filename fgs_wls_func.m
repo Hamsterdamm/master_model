@@ -4,13 +4,20 @@ function [ output ] = fgs_wls_func( input, guidance, lambda, T, varargin )
 
 temp=input;
 
+h = waitbar(0,'Filtering in progress...');
+
 for t=1:T
+    
+    waitbar(t/T)
+    
     lam=3/2*((4^(T-t))/(4^T-1))*lambda;
     temp=fgs_wls_h(temp,guidance,lam);
     temp=fgs_wls_v(temp,guidance,lam);
 end
 
 output=temp;
+
+close(h);
 
 end
 
