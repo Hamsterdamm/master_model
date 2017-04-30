@@ -26,7 +26,6 @@ for x=1:cols
                                     %и €ркостью k на правом
         end       
     end
-    
 end
 
 num_correspondence=sum(sum(P_I1_I2)); %число соответствий
@@ -38,9 +37,10 @@ P_I2=sum(transpose(P_I1_I2));%суммируем все веро€тности вдоль строк
 
 
 %энтропи€
+h12=log(P_I1_I2)*(-1/num_correspondence);
 h1=log(P_I1)*(-1/num_correspondence);
 h2=log(P_I2)*(-1/num_correspondence);
-h12=log(P_I1_I2)*(-1/num_correspondence);
+
 
 h = waitbar(0,'Please wait...');
 
@@ -57,7 +57,7 @@ for x=1:cols
             
                 i=left(y,x)+1;
                 k=right(y,x-d)+1;
-                cost(y,x,d+1)=-(h1(i)+h2(k)-h12(i,k));
+                cost(y,x,d+1)=-(h1(i)+h2(k)-h12(k,i));
         
             end
             
