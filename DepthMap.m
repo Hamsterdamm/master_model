@@ -36,8 +36,6 @@ imshow(disparity_map_L,[0 max(max(disparity_map_L))]);
 result=fgs_wls_func(double(disparity_map_L), double(disparity_map_L), 3, 3);
 
 figure;
-imshow(disparity_map_L,[0 max(max(disparity_map_L))]);
-figure;
 imshow(result,[0 max(max(result))]);
 
 %%
