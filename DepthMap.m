@@ -4,12 +4,14 @@ clc;
 
 %%
 %входные данные и параметры
-left=rgb2gray(imread('data/Teddy_L.png'));
-right=rgb2gray(imread('data/Teddy_R.png'));
+left=round(imresize(rgb2gray(imread('data/Teddy_L.png')),0.5));
+right=round(imresize(rgb2gray(imread('data/Teddy_R.png')),0.5));
+% left=rgb2gray(imread('data/Teddy_L.png'));
+% right=rgb2gray(imread('data/Teddy_R.png'));
 [rows,cols]=size(left);
-max_disparity=8*8;
-P1=8;
-P2=32;
+max_disparity=8*6;
+P1=100;
+P2=200;
 uniquenessRatio=2;
 disp12MaxDiff=10;
 
@@ -27,18 +29,19 @@ imshowpair(left,right,'montage');
 
 disparity_map_L=stereo_sg_func( left, right , max_disparity, P1, P2, uniquenessRatio);
 
+disparity_map_L(~isfinite(disparity_map_L))=0;
 %вывод карты глубины на экран
-% figure;
-% imshow(disparity_map_L,[0 max(max(disparity_map_L))]);
+figure;
+imshow(disparity_map_L,[0 max(max(disparity_map_L))]);
 
 %%
 %фильтраци€
 
-%загрузка изображени€
-result=fgs_wls_func(double(disparity_map_L), double(disparity_map_L), 0.5, 3, 0);
-figure;
-%imshow(result,[0 max(max(result))]);
-imshowpair(disparity_map_L,result,'montage','Scaling','joint');
+% %загрузка изображени€
+% result=fgs_wls_func(double(disparity_map_L), double(disparity_map_L), 0.5, 3, 0);
+% figure;
+% %imshow(result,[0 max(max(result))]);
+% imshowpair(disparity_map_L,result,'montage','Scaling','joint');
 
 %%
 % %дл€ правого изображени€
