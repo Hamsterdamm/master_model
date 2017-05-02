@@ -2,7 +2,7 @@ function [ disp ] = stereo_sg_map( rows, cols, cost, uniquenessRatio)
 %UNTITLED3 Summary of this function goes here
 %   Detailed explanation goes here
 
-disp=zeros(rows, cols,'uint8');
+disp=nan(rows, cols);
 
 %формирование карты глубины
 
@@ -15,8 +15,12 @@ for x=1:cols
     
     for y=1:rows
        
-        [~,d]=min(cost(y,x,:),[],3);
-        disp(y,x)=d-1;
+        [dmin,d]=min(cost(y,x,:),[],3);
+        if isfinite(dmin)
+            disp(y,x)=d-1;
+        else
+            disp(y,x)=nan;
+        end
          
     end
     
