@@ -42,7 +42,8 @@ cost_s=stereo_sg_cost_sum(rows_res,cols_res, cost, max_disparity_res, P1, P2);
 %%
 disp_prefilt=stereo_sg_map( rows_res,cols_res, cost_s, uniquenessRatio);
 
-disp=medfilt2(disp_prefilt);
+disp=disp_prefilt;
+%disp=medfilt2(disp_prefilt);
 
 end
 
